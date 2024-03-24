@@ -1,3 +1,4 @@
 simpy/__pycache__/*
+simpy/*/__pycache__/*
 systemc/build/*
 systemc/CMakeLists.txt
