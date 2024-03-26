@@ -14,7 +14,7 @@ class Initiator(Module):
         self.env.process(self.thread_process())
 
     def thread_process(self):
-        trans = Genetic_Payload()
+        trans = Generic_Payload()
         delay = 10
 
         for i in range(32, 96, 4):
@@ -49,7 +49,7 @@ class Memory(Module):
         self.socket = Socket(self.env)
         self.socket.register_b_transport(self.b_transport)
 
-    def b_transport(self, trans: Genetic_Payload, delay):
+    def b_transport(self, trans: Generic_Payload, delay):
         cmd = trans.get_command()
         adr = trans.get_address()
         ptr = trans.get_data_ptr()

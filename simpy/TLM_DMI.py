@@ -4,67 +4,10 @@ import random
 class ResponseError(Exception):
     pass
 
-class TLM_DMI:
-    DMI_ACCESS_NONE = 0x0
-    DMI_ACCESS_READ = 0x1
-    DMI_ACCESS_WRITE = 0x2
-    DMI_ACCESS_READ_WRITE = DMI_ACCESS_READ | DMI_ACCESS_WRITE
-
-    def __init__(self) -> None:
-        pass
-    def init(self):
-        self.m_dmi_ptr = 0x0
-        self.m_dmi_start_address = 0x0
-        self.m_dmi_end_address = 0xffffffffffffffff
-        self.m_dmi_access = TLM_DMI.DMI_ACCESS_NONE
-        self.m_dmi_read_latency = 0
-        self.m_dmi_write_latency = 0
-    def get_start_address(self):
-        return self.m_start_address
-    def get_end_address(self):
-        return self.m_dmi_end_address
-    def get_read_latency(self):
-        return self.m_dmi_read_latency
-    def get_write_latency(self):
-        return self.m_dmi_write_latency
-    def get_dmi_ptr(self):
-        return self.m_dmi_ptr
-    def get_granted_access(self):
-        return self.m_dmi_access
-    def is_none_allowed(self):
-        return self.m_dmi_access == TLM_DMI.DMI_ACCESS_NONE
-    def is_read_allowed(self):
-        return (self.m_dmi_access & TLM_DMI.DMI_ACCESS_READ) == TLM_DMI.DMI_ACCESS_READ
-    def is_write_allowed(self):
-        return (self.m_dmi_access & TLM_DMI.DMI_ACCESS_WRITE) == TLM_DMI.DMI_ACCESS_WRITE
-    def is_read_write_allowed(self):
-        return (self.m_dmi_access & TLM_DMI.DMI_ACCESS_READ_WRITE) == TLM_DMI.DMI_ACCESS_READ_WRITE
-
-    def set_dmi_ptr(self, p):
-        self.m_dmi_ptr = p
-    def set_start_address(self, addr):
-        self.m_dmi_start_address = addr
-    def set_end_address(self, addr):
-        self.m_dmi_end_address = addr
-    def set_read_latency(self, t):
-        self.m_dmi_read_latency = t
-    def set_write_latency(self, t):
-        self.m_dmi_write_latency = t
-    def set_granted_access(self, a):
-        self.m_dmi_access = a
-    def allow_none(self):
-        self.m_dmi_access = TLM_DMI.DMI_ACCESS_NONE
-    def allow_read(self):
-        self.m_dmi_access = TLM_DMI.DMI_ACCESS_READ
-    def allow_write(self):
-        self.m_dmi_access = TLM_DMI.DMI_ACCESS_WRITE
-    def allow_read_write(self):
-        self.m_dmi_access = TLM_DMI.DMI_ACCESS_READ_WRITE
-
 class Initiator(Module):
     def __init__(self, env, name):
         super().__init__(env, name)
-        self.socket = Socket(self.env)
+        self.socket = Socket(self)
         self.data = [None]
         self.dmi_ptr_valid = False
         self.dmi_data = TLM_DMI()
@@ -73,7 +16,7 @@ class Initiator(Module):
         self.env.process(self.thread_process())
 
     def thread_process(self):
-        trans = Genetic_Payload()
+        trans = Generic_Payload()
         delay = [10]
 
         for i in range(0, 128, 4):
@@ -141,14 +84,14 @@ class Memory(Module):
         self.LATENCY = 5
         for i in range(256):
             self.mem[i] = 0xaa000000 | random.randint(0, 256)
-        self.socket = Socket(self.env)
+        self.socket = Socket(self)
         self.socket.register_b_transport(self.b_transport)
         self.socket.register_get_direct_mem_ptr(self.get_direct_mem_ptr)
         self.socket.register_transport_dbg(self.transport_dbg)
 
         self.env.process(self.invalidation_process())
 
-    def transport_dbg(self, trans: Genetic_Payload):
+    def transport_dbg(self, trans: Generic_Payload):
         cmd = trans.get_command()
         adr = trans.get_address() // 4
         ptr = trans.get_data_ptr()
@@ -165,7 +108,7 @@ class Memory(Module):
 
         return num_bytes
 
-    def get_direct_mem_ptr(self, trans: Genetic_Payload, dmi_data: TLM_DMI):
+    def get_direct_mem_ptr(self, trans: Generic_Payload, dmi_data: TLM_DMI):
         dmi_data.allow_read_write()
         dmi_data.set_dmi_ptr(self.mem)
         dmi_data.set_start_address(0)
@@ -175,7 +118,7 @@ class Memory(Module):
 
         return True
 
-    def b_transport(self, trans: Genetic_Payload, delay):
+    def b_transport(self, trans: Generic_Payload, delay):
         cmd = trans.get_command()
         adr = trans.get_address()
         ptr = trans.get_data_ptr()
