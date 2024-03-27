@@ -9,7 +9,7 @@ class Initiator(Module):
     def __init__(self, env, name):
         super().__init__(env, name)
         self.m_initiator_port = Socket(self)
-        self.m_test_peq = peq_with_get(self.env)
+        self.m_test_peq = peq_with_get(self.env, "m_test_peq")
         self.m_slv_end_req_evt = self.env.event()
 
         self.m_initiator_port.register_nb_transport_bw(self.nb_transport_bw_func)
@@ -24,7 +24,7 @@ class Initiator(Module):
         while True:
             t_cycle_cnt += 1
             t_delay = t_cycle_cnt
-            t_payload = Genetic_Payload()
+            t_payload = Generic_Payload()
             t_payload.set_address(0x10000 + t_cycle_cnt)
             print("{} \033[34m [{}] call nb_transport_fw, BEGIN_REQ phase, addr = {}, delay cycle {} \033[0m"
                   .format(self.name,
@@ -38,7 +38,7 @@ class Initiator(Module):
             yield self.env.timeout(1)
 
     def nb_transport_bw_func(self,
-                             payload: Genetic_Payload,
+                             payload: Generic_Payload,
                              phase: tlm_phase,
                              delay: int,
                              return_value: tlm_sync_enum):
@@ -93,7 +93,7 @@ class Target(Module):
         self.env.process(self.BeginRespThread())
 
     def nb_transport_fw_func(self,
-                             payload: Genetic_Payload,
+                             payload: Generic_Payload,
                              phase: tlm_phase,
                              delay: int,
                              return_value: tlm_sync_enum):
