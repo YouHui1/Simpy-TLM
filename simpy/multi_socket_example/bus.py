@@ -23,10 +23,8 @@ class Bus(Module):
                         trans: Generic_Payload,
                         phase: tlm_phase,
                         delay: int,
-                        id: int,
-                        ret):
-        yield self.env.timeout(0)
-        # print("?????2")
+                        id: int):
+        # yield self.env.timeout(0)
         assert id < len(self.targ_socket.m_sockets), "nb_transport_fw: invalid id"
         self.m_id_map[trans] = id
         address = trans.get_address()
@@ -35,27 +33,23 @@ class Bus(Module):
         masked_address = masked_address[0]
         if target_nr < len(self.init_socket.m_sockets):
             trans.set_address(masked_address)
-            # print("?????3")
-            dprint(f'{self.name}_init trans: {trans} phase: {phase} now: {self.env.now} delay: {delay}')
             status = self.init_socket.nb_transport_fw(trans, phase, delay, target_nr)
             if status == tlm_sync_enum.TLM_COMPLETED:
                 trans.set_address(address)
-            ret[0] = status
+            return status
         else:
-            ret[0] = tlm_sync_enum.TLM_COMPLETED
+            return status
 
     def nb_transport_bw(self,
                         trans: Generic_Payload,
                         phase: tlm_phase,
                         delay: int,
-                        id: int,
-                        ret):
-        yield self.env.timeout(0)
+                        id: int):
+        # yield self.env.timeout(0)
         assert id < len(self.init_socket.m_sockets), "nb_transport_bw: invalid id"
         address = trans.get_address()
         trans.set_address(self.compose_address(id, address))
-        dprint(f'{self.name}_targ trans: {trans} phase: {phase} now: {self.env.now} delay: {delay}')
-        ret[0] = self.targ_socket.nb_transport_bw(trans, phase, delay, self.m_id_map[trans])
+        return self.targ_socket.nb_transport_bw(trans, phase, delay, self.m_id_map[trans])
 
     def b_transport(self,
                     trans: Generic_Payload,

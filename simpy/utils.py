@@ -85,8 +85,9 @@ class fifo:
 
     def write(self, value):
         self.buf.put(value)
-        self.read_event.succeed()
-        self.read_event = self.env.event()
+        if not self.read_event.triggered:
+            self.read_event.succeed()
+        # self.read_event = self.env.event()
         # self.nb_write(value)
         return True
 
@@ -95,18 +96,23 @@ class fifo:
 
     def nb_write(self, value):
         if self.is_full():
+            self.write_event.succeed()
             return False
         self.buf.put(value)
         self.read_event.succeed()
-        self.read_event = self.env.event()
+        # self.read_event = self.env.event()
         return True
 
     def nb_read(self):
         if self.is_empty():
+            # self.read_event = self.env.event()
             return None
         value = self.buf.get().value
-        self.write_event.succeed()
-        self.write_event = self.env.event()
+        if self.write_event.triggered:
+            self.write_event.succeed()
+        if self.is_empty():
+            self.read_event = self.env.event()
+        # self.write_event = self.env.event()
         return value
 
     def is_empty(self):
@@ -259,6 +265,8 @@ class Socket:
         self.get_direct_mem_ptr_func = None
         self.invalidate_direct_mem_ptr_func = None
         self.block_event = self.env.event()
+        self.nb_fw_status = tlm_sync_enum.TLM_ACCEPTED
+        self.nb_bw_status = tlm_sync_enum.TLM_ACCEPTED
 
     def bind(self, other):
         if isinstance(other, Socket):
@@ -297,28 +305,22 @@ class Socket:
         # self.block_event = simpy.Event(self.env)
 
     def nb_transport_bw(self, trans, phase, t):
-        ret = [0]
         assert self.other_socket.nb_transport_bw_func is not None, f"{self.other_socket.name} nb_transport_bw_func is None"
         if isinstance(self.other_socket, Socket):
-            self.env.process(self.other_socket.nb_transport_bw_func(trans, phase, t, ret))
+            return self.other_socket.nb_transport_bw_func(trans, phase, t)
         elif isinstance(self.other_socket, MultiSocket):
-            dprint(f"nb_transport_bw {self.name} to {self.other_socket.name}")
-            self.env.process(self.other_socket.nb_transport_bw_func(trans, phase, t, self.other_socket.m_sockets.index(self), ret))
+            return self.other_socket.nb_transport_bw_func(trans, phase, t, self.other_socket.m_sockets.index(self))
         else:
             assert False, "nb_transport_bw: Invalid Type"
-        return ret
 
     def nb_transport_fw(self, trans, phase, t):
-        ret = [0]
         assert self.other_socket.nb_transport_fw_func is not None, f"{self.other_socket.name} nb_transport_fw_func is None"
         if isinstance(self.other_socket, Socket):
-            self.env.process(self.other_socket.nb_transport_fw_func(trans, phase, t, ret))
+            return self.other_socket.nb_transport_fw_func(trans, phase, t)
         elif isinstance(self.other_socket, MultiSocket):
-            dprint(f"nb_transport_fw {self.name} to {self.other_socket.name}")
-            self.env.process(self.other_socket.nb_transport_fw_func(trans, phase, t, self.other_socket.m_sockets.index(self), ret))
+            return self.other_socket.nb_transport_fw_func(trans, phase, t, self.other_socket.m_sockets.index(self))
         else:
             assert False, "nb_transport_fw: Invalid Type"
-        return ret
 
     def transport_dbg(self, trans):
         if isinstance(self.other_socket, Socket):
@@ -426,6 +428,8 @@ class MultiSocket:
         self.invalidate_direct_mem_ptr_func = None
         self.m_transport_user_id = None
         self.block_event = self.env.event()
+        self.nb_fw_status = tlm_sync_enum.TLM_ACCEPTED
+        self.nb_bw_status = tlm_sync_enum.TLM_ACCEPTED
     def bind(self, other):
         if isinstance(other, Socket):
             assert other.other_socket is None, "Bind Error: the socket is bound"
@@ -465,18 +469,13 @@ class MultiSocket:
         # self.block_event = simpy.Event(self.env)
 
     def nb_transport_bw(self, trans, phase, t, id):
-        ret = [0]
         assert self.m_sockets[id].nb_transport_bw_func is not None, f"{self.other_socket.name} nb_transport_bw_func is None"
-        dprint(f"nb_transport_bw {self.name} to {self.m_sockets[id].name}")
-        self.env.process(self.m_sockets[id].nb_transport_bw_func(trans, phase, t, ret))
-        return ret
+        # self.env.process(self.m_sockets[id].nb_transport_bw_func(trans, phase, t, ret))
+        return self.m_sockets[id].nb_transport_bw_func(trans, phase, t)
 
     def nb_transport_fw(self, trans, phase, t, id):
-        ret = [0]
         assert self.m_sockets[id].nb_transport_fw_func is not None, f"{self.other_socket.name} nb_transport_fw_func is None"
-        dprint(f"nb_transport_fw {self.name} to {self.m_sockets[id].name}")
-        self.env.process(self.m_sockets[id].nb_transport_fw_func(trans, phase, t, ret))
-        return ret
+        return self.m_sockets[id].nb_transport_fw_func(trans, phase, t)
 
     def transport_dbg(self, trans, id):
         return self.m_sockets[id].transport_dbg_func(trans)

@@ -31,7 +31,7 @@ class Initiator(Module):
                           self.env.now,
                           hex(t_payload.get_address()),
                           t_cycle_cnt))
-            self.m_initiator_port.nb_transport_fw(t_payload, t_phase, t_delay)
+            yield from self.m_initiator_port.nb_transport_fw(t_payload, t_phase, t_delay)
 
             yield self.m_slv_end_req_evt
 
@@ -40,9 +40,7 @@ class Initiator(Module):
     def nb_transport_bw_func(self,
                              payload: Generic_Payload,
                              phase: tlm_phase,
-                             delay: int,
-                             return_value: tlm_sync_enum):
-        yield self.env.timeout(0)
+                             delay: int):
         if phase.m_id == tlm_phase.END_REQ:
             print("{} \033[35m [{}] nb_transport_bw_func recv END_REQ phase, addr = {}\033[0m"
                   .format(self.name,
@@ -59,7 +57,7 @@ class Initiator(Module):
         else:
             assert False, f"{self.name} Invalid phase"
 
-        return_value = tlm_sync_enum.TLM_ACCEPTED
+        return tlm_sync_enum.TLM_ACCEPTED
 
     def SendEndRespThread(self):
         t_get = -1
@@ -70,12 +68,11 @@ class Initiator(Module):
             yield from self.m_test_peq.get_next_transaction()
             t_get = self.m_test_peq.out
             while t_get != 0:
-
                 print("{} \033[34m [{}] call nb_transport_fw, END_RESP phase, addr = {}\033[0m"
                         .format(self.name,
                                 self.env.now,
                                 hex(t_get.get_address())))
-                self.m_initiator_port.nb_transport_fw(t_get, t_phase, t_delay)
+                yield from self.m_initiator_port.nb_transport_fw(t_get, t_phase, t_delay)
                 t_get = 0
                 yield from self.m_test_peq.get_next_transaction()
                 t_get = self.m_test_peq.out
@@ -95,8 +92,7 @@ class Target(Module):
     def nb_transport_fw_func(self,
                              payload: Generic_Payload,
                              phase: tlm_phase,
-                             delay: int,
-                             return_value: tlm_sync_enum):
+                             delay: int):
         yield self.env.timeout(delay)
         if phase.m_id == tlm_phase.BEGIN_REQ:
             # yield self.m_req_fifo.write_event
@@ -114,7 +110,7 @@ class Target(Module):
         else:
             assert False, f"{self.name} Invalid phase"
 
-        return_value = tlm_sync_enum.TLM_ACCEPTED
+        return tlm_sync_enum.TLM_ACCEPTED
 
     def MainThread(self):
         t_phase = tlm_phase(tlm_phase.END_REQ)

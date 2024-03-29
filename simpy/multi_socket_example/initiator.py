@@ -6,7 +6,6 @@ class Initiator(Module):
     def __init__(self, env: Environment, name: str):
         super().__init__(env, name)
         self.socket = Socket(self)
-        # self.m_mm = mm()
         self.data = [[0]] * 16
         self.request_in_progress = None
         self.end_request_event = self.env.event()
@@ -42,9 +41,7 @@ class Initiator(Module):
             trans.set_dmi_allowed(False)
             trans.set_response_status(tlm_response_status.TLM_INCOMPLETE_RESPONSE, self.socket)
             if self.request_in_progress is not None:
-                dprint(f"{self.name} wait for event. now: {self.env.now}")
                 yield self.end_request_event
-                dprint(f"{self.name} free. now: {self.env.now}")
 
             self.request_in_progress = trans
             phase = tlm_phase.BEGIN_REQ
@@ -57,53 +54,55 @@ class Initiator(Module):
                           hex(self.data[i % 16][0]) if isinstance(self.data[i % 16], list) else hex(self.data[i % 16]),
                           self.env.now),
                   file=fout)
-            dprint(f'{self.name} trans: {trans} epoch: {i} phase: {phase} now: {self.env.now} delay: {delay}')
             status = self.socket.nb_transport_fw(trans, phase, delay)
-            if status[0] == tlm_sync_enum.TLM_UPDATED:
+            if status == tlm_sync_enum.TLM_UPDATED:
                 self.env.process(self.trigger_event(trans, phase, delay))
-            elif status[0] == tlm_sync_enum.TLM_COMPLETED:
+            elif status == tlm_sync_enum.TLM_COMPLETED:
                 self.request_in_progress = None
                 self.check_transaction(trans)
             w = SC_PS(rand_ps())
-            dprint(f"{self.name} wait epoch {i} for {w}")
             yield self.env.timeout(w)
 
         yield self.env.timeout(SC_NS(100))
 
-        trans = Generic_Payload()
-        trans.set_command(tlm_command.TLM_WRITE_COMMAND)
-        trans.set_address(0)
-        trans.set_data_ptr(self.data[0])
-        trans.set_data_length(4)
-        trans.set_streaming_width(4)
-        trans.set_byte_enable_ptr(0)
-        trans.set_dmi_allowed(False)
-        trans.set_response_status(tlm_response_status.TLM_INCOMPLETE_RESPONSE, self.socket)
+        # trans = Generic_Payload()
+        # trans.set_command(tlm_command.TLM_WRITE_COMMAND)
+        # trans.set_address(0)
+        # trans.set_data_ptr(self.data[0])
+        # trans.set_data_length(4)
+        # trans.set_streaming_width(4)
+        # trans.set_byte_enable_ptr(0)
+        # trans.set_dmi_allowed(False)
+        # trans.set_response_status(tlm_response_status.TLM_INCOMPLETE_RESPONSE, self.socket)
 
-        delay = SC_PS(rand_ps())
-        print("Calling b_transport at {} with delay = {}"
-                .format(self.env.now,
-                        delay),
-                file=fout)
-        yield self.env.process(self.socket.b_transport(trans, delay))
-        self.check_transaction(trans)
+        # delay = SC_PS(rand_ps())
+        # print("Calling b_transport at {} with delay = {}"
+        #         .format(self.env.now,
+        #                 delay),
+        #         file=fout)
+        # yield self.env.process(self.socket.b_transport(trans, delay))
+        # self.check_transaction(trans)
+    def timeout(self, phase, delay):
+        yield self.env.timeout(delay)
+        print(f"Timeout: {self.name} throw the payload away, phase: {phase}, time: {self.env.now}", file=fout)
 
     def nb_transport_bw(self,
                         trans: Generic_Payload,
                         phase: tlm_phase,
-                        delay: int,
-                        ret):
-        yield self.env.timeout(0)
-        dprint(f'{self.name} recv: {trans} phase: {phase} now: {self.env.now} delay: {delay}')
+                        delay: int):
+        # yield self.env.timeout(0)
+        if (delay > 5000):
+            self.env.process(self.timeout(phase, delay))
+            self.request_in_progress = None
+            self.end_request_event.succeed()
+            self.end_request_event = self.env.event()
+            return tlm_sync_enum.TLM_COMPLETED
         self.env.process(self.trigger_event(trans, phase, delay))
-        ret[0] = tlm_sync_enum.TLM_ACCEPTED
+        return tlm_sync_enum.TLM_ACCEPTED
 
     def peq_cb(self, trans, phase):
-        # yield self.env.timeout(0)
-        dprint(f'{self.name} callback: {trans} phase: {phase} now: {self.env.now}')
         if phase == tlm_phase.END_REQ or (trans == self.request_in_progress and phase == tlm_phase.BEGIN_RESP):
             self.request_in_progress = None
-            dprint(f"{self.name} unlock the event. now: {self.env.now}")
             self.end_request_event.succeed()
             self.end_request_event = self.env.event()
         elif phase == tlm_phase.BEGIN_REQ or phase == tlm_phase.END_RESP:
@@ -111,10 +110,8 @@ class Initiator(Module):
 
         if phase == tlm_phase.BEGIN_RESP:
             self.check_transaction(trans)
-            # print(">>>", phase)
             fw_phase = tlm_phase.END_RESP
             delay = SC_PS(rand_ps())
-            dprint(f'{self.name} trans: {trans} phase: {fw_phase} now: {self.env.now} delay: {delay}')
             self.socket.nb_transport_fw(trans, fw_phase, delay)
 
     def check_transaction(self, trans: Generic_Payload):
