@@ -1,0 +1,139 @@
+$date
+    Sat Apr 13 20:19:00 2024
+$end
+$version
+    MyHDL 0.11.43
+$end
+$timescale
+    1ps
+$end
+
+$scope module logic_gate $end
+$var reg 1 ! c $end
+$var reg 1 " d $end
+$var reg 1 # e $end
+$var reg 2 $ f $end
+$var reg 1 % a $end
+$var reg 1 & b $end
+$var reg 4 ' cnt $end
+$scope module dut0 $end
+$var reg 1 % a $end
+$var reg 1 & b $end
+$var reg 1 ! c $end
+$var reg 1 " d $end
+$var reg 1 # e $end
+$var reg 2 $ f $end
+$upscope $end
+$upscope $end
+
+$enddefinitions $end
+$dumpvars
+b0 !
+b0 "
+b0 #
+b00 $
+b0 %
+b0 &
+b0000 '
+$end
+b0001 '
+#100000
+b1 %
+b0010 '
+#100305
+b1 "
+b1 #
+b10 $
+#200000
+b1 &
+b0 %
+b0011 '
+#200305
+b01 $
+#300000
+b1 %
+b0100 '
+#300305
+b1 !
+b0 #
+b11 $
+#400000
+b0 &
+b0 %
+b0101 '
+#400305
+b0 !
+b0 "
+b00 $
+#500000
+b1 %
+b0110 '
+#500305
+b1 "
+b1 #
+b10 $
+#600000
+b1 &
+b0 %
+b0111 '
+#600305
+b01 $
+#700000
+b1 %
+b1000 '
+#700305
+b1 !
+b0 #
+b11 $
+#800000
+b0 &
+b0 %
+b1001 '
+#800305
+b0 !
+b0 "
+b00 $
+#900000
+b1 %
+b1010 '
+#900305
+b1 "
+b1 #
+b10 $
+#1000000
+b1 &
+b0 %
+b1011 '
+#1000305
+b01 $
+#1100000
+b1 %
+b1100 '
+#1100305
+b1 !
+b0 #
+b11 $
+#1200000
+b0 &
+b0 %
+b1101 '
+#1200305
+b0 !
+b0 "
+b00 $
+#1300000
+b1 %
+b1110 '
+#1300305
+b1 "
+b1 #
+b10 $
+#1400000
+b1 &
+b0 %
+b1111 '
+#1400305
+b01 $
+#1500000
+b1 %
+b0000 '
