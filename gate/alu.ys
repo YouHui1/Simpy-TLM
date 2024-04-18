@@ -1,0 +1,20 @@
+# 读取设计
+read_verilog output/ALU/ALU.v
+
+# 设定综合的顶层模块
+hierarchy -top ALU
+
+# 执行通用优化
+proc; opt; fsm; opt; memory; opt
+
+# 指定门级库文件
+read_liberty -lib smic13_ff.lib
+
+# 映射到门级
+# techmap; opt
+
+select -module ALU
+
+# 输出结果
+# write_verilog logic_gate_yosys.v
+write_json ALU.json

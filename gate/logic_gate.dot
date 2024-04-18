@@ -1,0 +1,33 @@
+digraph "logic_gate" {
+label="logic_gate";
+rankdir="LR";
+remincross=true;
+n1 [ shape=diamond, label="n2", color="black", fontcolor="black" ];
+n2 [ shape=octagon, label="f", color="black", fontcolor="black" ];
+n3 [ shape=octagon, label="e", color="black", fontcolor="black" ];
+n4 [ shape=octagon, label="d", color="black", fontcolor="black" ];
+n5 [ shape=octagon, label="c", color="black", fontcolor="black" ];
+n6 [ shape=octagon, label="b", color="black", fontcolor="black" ];
+n7 [ shape=octagon, label="a", color="black", fontcolor="black" ];
+c10 [ shape=record, label="{{<p8> A}|U5\n$_NOT_|{<p9> Y}}",  ];
+c12 [ shape=record, label="{{<p8> A|<p11> B}|U6\n$_AND_|{<p9> Y}}",  ];
+c13 [ shape=record, label="{{<p8> A|<p11> B}|U7\n$_NOR_|{<p9> Y}}",  ];
+c14 [ shape=record, label="{{<p8> A|<p11> B}|U8\n$_NOR_|{<p9> Y}}",  ];
+x0 [ shape=record, style=rounded, label="<s0> 0:0 - 1:1 ", color="black", fontcolor="black" ];
+x1 [ shape=record, style=rounded, label="<s0> 0:0 - 0:0 ", color="black", fontcolor="black" ];
+c13:p9:e -> n1:w [color="black", fontcolor="black", label=""];
+n1:e -> c10:p8:w [color="black", fontcolor="black", label=""];
+n1:e -> c14:p11:w [color="black", fontcolor="black", label=""];
+x0:s0:e -> n2:w [color="black", fontcolor="black", label=""];
+x1:s0:e -> n2:w [color="black", fontcolor="black", label=""];
+c14:p9:e -> n3:w [color="black", fontcolor="black", label=""];
+c10:p9:e -> n4:w [color="black", fontcolor="black", label=""];
+c12:p9:e -> n5:w [color="black", fontcolor="black", label=""];
+n5:e -> c14:p8:w [color="black", fontcolor="black", label=""];
+n6:e -> c12:p11:w [color="black", fontcolor="black", label=""];
+n6:e -> c13:p11:w [color="black", fontcolor="black", label=""];
+n6:e -> x1:w [color="black", fontcolor="black", label=""];
+n7:e -> c12:p8:w [color="black", fontcolor="black", label=""];
+n7:e -> c13:p8:w [color="black", fontcolor="black", label=""];
+n7:e -> x0:w [color="black", fontcolor="black", label=""];
+}

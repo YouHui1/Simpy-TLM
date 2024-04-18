@@ -8,7 +8,7 @@ class ResponseError(Exception):
 class Initiator(Module):
     def __init__(self, env, name):
         super().__init__(env, name)
-        self.socket = Socket(self.env)
+        self.socket = Socket(self)
         self.data = [None]
 
         self.env.process(self.thread_process())
@@ -46,7 +46,7 @@ class Memory(Module):
         self.mem = [0] * 256
         for i in range(256):
             self.mem[i] = 0xaa000000 | random.randint(0, 256)
-        self.socket = Socket(self.env)
+        self.socket = Socket(self)
         self.socket.register_b_transport(self.b_transport)
 
     def b_transport(self, trans: Generic_Payload, delay):
